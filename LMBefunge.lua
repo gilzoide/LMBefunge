@@ -1,8 +1,11 @@
+#!/usr/bin/env lua
+
 local mosaic = require 'mosaic'
+local color = mosaic.color
 
 -- Need a Mosaic, sorry...
 if not arg[1] then
-	print ('USAGE: interpreter.lua FILE_NAME')
+	print ('Usage: ' .. arg[0] .. ' FILE_NAME')
 	os.exit (-1)
 end
 
@@ -54,7 +57,15 @@ function move (dir)
 	elseif y > mos:GetHeight () then
 		y = 1
 	end
+end
 
+local outBuffer = {}
+function output (msg)
+	if not debugMode then
+		io.write (msg)
+	else	-- debugMode
+		table.insert (outBuffer, msg)
+	end
 end
 
 while true do
@@ -64,7 +75,25 @@ while true do
 
 	-- Debug Mode: print where it is and what's on stack
 	if debugMode then
-		print ('Where: ' .. x .. 'x' .. y, 'char: ' .. char, '\tStack: [' .. table.concat (stack, ', ') .. ']')
+		-- clear screen, please
+		os.execute ('clear')
+		-- print debug stuff
+		print ('Where: ' .. x .. 'x' .. y .. '\tchar: ' .. char .. '\tStack: [' .. table.concat (stack, ', ') .. ']')
+		for i = 1, mos:GetHeight () do
+			for j = 1, mos:GetWidth () do
+				if i == y and j == x then
+					color.Tcolor (color.NR)
+					io.write (mos:GetCh (i, j))
+					color.Tcolor (color.Normal)
+				else
+					io.write (mos:GetCh (i, j))
+				end
+			end
+			print ()
+		end
+		print ('\n\nOutput\n' .. table.concat (outBuffer))
+		-- wait for user input
+		io.read ()
 	end
 
 
@@ -154,10 +183,10 @@ while true do
 		stack:pop ()
 	-- print number
 	elseif char == '.' then
-		io.write (stack:pop ())
+		output (stack:pop ())
 	-- print char
 	elseif char == ',' then
-		io.write (stack:pop ())
+		output (stack:pop ())
 	-- jump
 	elseif char == '#' then
 		move (direction)
